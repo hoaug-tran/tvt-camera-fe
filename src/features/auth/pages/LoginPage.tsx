@@ -106,7 +106,7 @@ const LoginPage = () => {
                 display: "block",
               }}
             >
-              Trang quản lý hệ thống camera
+              Đăng nhập trang quản lý hệ thống camera
             </Typography>
           </Box>
 
@@ -191,16 +191,6 @@ const LoginPage = () => {
               </Button>
             </Stack>
           </Box>
-
-          <Typography
-            variant={isMobile ? "caption" : "body2"}
-            sx={{
-              color: palette.neutral[500],
-              textAlign: "center",
-            }}
-          >
-            Demo: admin / admin
-          </Typography>
         </Stack>
       </Paper>
     </Box>

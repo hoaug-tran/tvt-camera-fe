@@ -51,11 +51,7 @@ const ViewPage = () => {
 
         <Box
           sx={{
-            backgroundColor: "#fff",
-            borderRadius: "8px",
-            p: 4,
             textAlign: "center",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
           }}
         >
           <Typography variant="h6" sx={{ color: "#333", fontWeight: 500 }}>
