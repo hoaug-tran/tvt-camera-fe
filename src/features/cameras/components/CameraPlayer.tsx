@@ -130,5 +130,3 @@ export const CameraPlayer = ({
     </Box>
   );
 };
-
-export default CameraPlayer;

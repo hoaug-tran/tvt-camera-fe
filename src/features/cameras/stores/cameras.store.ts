@@ -53,5 +53,3 @@ export const useCamerasStore = create<CamerasState>((set) => ({
       return { streamingStates: newStates };
     }),
 }));
-
-export default useCamerasStore;

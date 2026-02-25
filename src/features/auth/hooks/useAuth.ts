@@ -1,4 +1,4 @@
-import useAuthStore from "@features/auth/stores/auth.store";
+import { useAuthStore } from "@features/auth/stores/auth.store";
 
 /**
  * Hook để access auth state và methods

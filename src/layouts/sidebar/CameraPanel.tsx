@@ -32,5 +32,3 @@ export const CameraPanel = () => {
     </Box>
   );
 };
-
-export default CameraPanel;

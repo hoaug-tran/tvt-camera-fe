@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { streamingApi } from "@features/cameras/services/streaming.api";
-import useCamerasStore from "@features/cameras/stores/cameras.store";
+import { useCamerasStore } from "@features/cameras/stores/cameras.store";
 import type { StreamingState } from "@features/cameras/types/camera.types";
 import { logError } from "@utils/errorHandler";
 

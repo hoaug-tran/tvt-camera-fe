@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useReducer } from "react";
 import {
   Box,
   Typography,
@@ -11,11 +11,6 @@ import {
   TableRow,
   Paper,
   IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
   Alert,
   CircularProgress,
   Stack,
@@ -25,44 +20,52 @@ import {
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { Navbar } from "@layouts/header/Navbar";
 import { useCameraManagement } from "@features/cameras/hooks/useCameraManagement";
-import type {
-  CameraDevice,
-  CreateCameraRequest,
-  PatchCameraRequest,
-} from "@features/cameras/types/camera.types";
+import type { CameraDevice } from "@features/cameras/types/camera.types";
 import { darkPalette } from "@themes/palette";
+import { CreateCameraDialog } from "./CreateCameraDialog";
+import { EditCameraDialog } from "./EditCameraDialog";
+import { DeleteCameraDialog } from "./DeleteCameraDialog";
 
-interface CreateFormState {
-  udCameraDeviceIpAdress: string;
-  udCameraDevicePort: string;
-  udCameraDeviceUsername: string;
-  udCameraDevicePassword: string;
-  udCameraDeviceIdDauGhi: string;
-  udCameraDeviceIdChanel: string;
-  udCameraDeviceSuDung: string;
-}
+type DialogAction =
+  | { type: "OPEN_CREATE" }
+  | { type: "CLOSE_CREATE" }
+  | { type: "OPEN_EDIT"; camera: CameraDevice }
+  | { type: "CLOSE_EDIT" }
+  | { type: "OPEN_DELETE"; camera: CameraDevice }
+  | { type: "CLOSE_DELETE" };
 
-interface PatchFormState {
-  udCameraDeviceIdDauGhi: string;
-  udCameraDeviceIdChanel: string;
-  udCameraDeviceUsername: string;
-}
-
-const defaultCreateForm: CreateFormState = {
-  udCameraDeviceIpAdress: "",
-  udCameraDevicePort: "",
-  udCameraDeviceUsername: "",
-  udCameraDevicePassword: "",
-  udCameraDeviceIdDauGhi: "",
-  udCameraDeviceIdChanel: "",
-  udCameraDeviceSuDung: "",
+type DialogState = {
+  createOpen: boolean;
+  editOpen: boolean;
+  deleteOpen: boolean;
+  selectedCamera: CameraDevice | null;
 };
 
-const defaultPatchForm: PatchFormState = {
-  udCameraDeviceIdDauGhi: "",
-  udCameraDeviceIdChanel: "",
-  udCameraDeviceUsername: "",
+const initialDialogState: DialogState = {
+  createOpen: false,
+  editOpen: false,
+  deleteOpen: false,
+  selectedCamera: null,
 };
+
+function dialogReducer(state: DialogState, action: DialogAction): DialogState {
+  switch (action.type) {
+    case "OPEN_CREATE":
+      return { ...state, createOpen: true };
+    case "CLOSE_CREATE":
+      return { ...state, createOpen: false };
+    case "OPEN_EDIT":
+      return { ...state, editOpen: true, selectedCamera: action.camera };
+    case "CLOSE_EDIT":
+      return { ...state, editOpen: false, selectedCamera: null };
+    case "OPEN_DELETE":
+      return { ...state, deleteOpen: true, selectedCamera: action.camera };
+    case "CLOSE_DELETE":
+      return { ...state, deleteOpen: false, selectedCamera: null };
+    default:
+      return state;
+  }
+}
 
 export const CameraManagementPage = () => {
   const {
@@ -77,106 +80,17 @@ export const CameraManagementPage = () => {
     deleteCamera,
   } = useCameraManagement();
 
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [selectedCamera, setSelectedCamera] = useState<CameraDevice | null>(
-    null,
-  );
-  const [createForm, setCreateForm] =
-    useState<CreateFormState>(defaultCreateForm);
-  const [patchForm, setPatchForm] = useState<PatchFormState>(defaultPatchForm);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [dialog, dispatch] = useReducer(dialogReducer, initialDialogState);
 
   useEffect(() => {
     fetchCameras();
   }, [fetchCameras]);
 
-  const handleCreateOpen = () => {
-    setCreateForm(defaultCreateForm);
-    setFormError(null);
-    setCreateOpen(true);
-  };
-
-  const handleEditOpen = (camera: CameraDevice) => {
-    setSelectedCamera(camera);
-    setPatchForm({
-      udCameraDeviceIdDauGhi: camera.udCameraDeviceIdDauGhi?.toString() ?? "",
-      udCameraDeviceIdChanel: camera.udCameraDeviceIdChanel?.toString() ?? "",
-      udCameraDeviceUsername: camera.udCameraDeviceUsername ?? "",
-    });
-    setFormError(null);
-    setEditOpen(true);
-  };
-
-  const handleDeleteOpen = (camera: CameraDevice) => {
-    setSelectedCamera(camera);
-    setDeleteOpen(true);
-  };
-
-  const handleCreateSubmit = async () => {
-    setFormError(null);
-    const port = createForm.udCameraDevicePort
-      ? parseInt(createForm.udCameraDevicePort)
-      : undefined;
-
-    if (port !== undefined && (isNaN(port) || port < 1 || port > 65535)) {
-      setFormError("Port phải là số từ 1 đến 65535");
-      return;
-    }
-
-    const data: CreateCameraRequest = {
-      udCameraDeviceIpAdress: createForm.udCameraDeviceIpAdress || undefined,
-      udCameraDevicePort: port,
-      udCameraDeviceUsername: createForm.udCameraDeviceUsername || undefined,
-      udCameraDevicePassword: createForm.udCameraDevicePassword || undefined,
-      udCameraDeviceIdDauGhi: createForm.udCameraDeviceIdDauGhi
-        ? parseInt(createForm.udCameraDeviceIdDauGhi)
-        : undefined,
-      udCameraDeviceIdChanel: createForm.udCameraDeviceIdChanel
-        ? parseInt(createForm.udCameraDeviceIdChanel)
-        : undefined,
-      udCameraDeviceSuDung: createForm.udCameraDeviceSuDung || undefined,
-    };
-
-    const success = await createCamera(data);
-    if (success) {
-      setCreateOpen(false);
-      setCreateForm(defaultCreateForm);
-    } else {
-      setFormError("Tạo camera thất bại. Vui lòng thử lại.");
-    }
-  };
-
-  const handlePatchSubmit = async () => {
-    if (!selectedCamera) return;
-    setFormError(null);
-
-    const data: PatchCameraRequest = {
-      udCameraDeviceIdDauGhi: patchForm.udCameraDeviceIdDauGhi
-        ? parseInt(patchForm.udCameraDeviceIdDauGhi)
-        : undefined,
-      udCameraDeviceIdChanel: patchForm.udCameraDeviceIdChanel
-        ? parseInt(patchForm.udCameraDeviceIdChanel)
-        : undefined,
-      udCameraDeviceUsername: patchForm.udCameraDeviceUsername || undefined,
-    };
-
-    const success = await patchCamera(selectedCamera.udCameraDeviceID, data);
-    if (success) {
-      setEditOpen(false);
-      setSelectedCamera(null);
-    } else {
-      setFormError("Cập nhật camera thất bại. Vui lòng thử lại.");
-    }
-  };
-
   const handleDeleteConfirm = async () => {
-    if (!selectedCamera) return;
-    const success = await deleteCamera(selectedCamera.udCameraDeviceID);
+    if (!dialog.selectedCamera) return;
+    const success = await deleteCamera(dialog.selectedCamera.udCameraDeviceID);
     if (success) {
-      setDeleteOpen(false);
-      setSelectedCamera(null);
+      dispatch({ type: "CLOSE_DELETE" });
     }
   };
 
@@ -213,17 +127,6 @@ export const CameraManagementPage = () => {
     bgcolor: darkPalette.background.surface,
   };
 
-  const textFieldSx = {
-    "& .MuiOutlinedInput-root": {
-      color: darkPalette.neutral[50],
-      "& fieldset": { borderColor: darkPalette.divider },
-      "&:hover fieldset": { borderColor: darkPalette.secondary.main },
-      "&.Mui-focused fieldset": { borderColor: darkPalette.secondary.main },
-    },
-    "& .MuiInputLabel-root": { color: darkPalette.neutral[400] },
-    "& .MuiInputLabel-root.Mui-focused": { color: darkPalette.secondary.main },
-  };
-
   return (
     <>
       <Navbar />
@@ -249,7 +152,7 @@ export const CameraManagementPage = () => {
           <Button
             variant="contained"
             startIcon={<Plus size={18} />}
-            onClick={handleCreateOpen}
+            onClick={() => dispatch({ type: "OPEN_CREATE" })}
             sx={{
               bgcolor: darkPalette.secondary.main,
               "&:hover": {
@@ -351,7 +254,9 @@ export const CameraManagementPage = () => {
                       <Stack direction="row" spacing={1}>
                         <IconButton
                           size="small"
-                          onClick={() => handleEditOpen(camera)}
+                          onClick={() =>
+                            dispatch({ type: "OPEN_EDIT", camera })
+                          }
                           sx={{
                             color: darkPalette.secondary.main,
                             "&:hover": { bgcolor: "rgba(232, 92, 74, 0.1)" },
@@ -361,7 +266,9 @@ export const CameraManagementPage = () => {
                         </IconButton>
                         <IconButton
                           size="small"
-                          onClick={() => handleDeleteOpen(camera)}
+                          onClick={() =>
+                            dispatch({ type: "OPEN_DELETE", camera })
+                          }
                           sx={{
                             color: darkPalette.semantic?.error ?? "#ef4444",
                             "&:hover": { bgcolor: "rgba(239, 68, 68, 0.1)" },
@@ -397,293 +304,34 @@ export const CameraManagementPage = () => {
         )}
       </Box>
 
-      <Dialog
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            bgcolor: darkPalette.background.surface,
-            border: `1px solid ${darkPalette.divider}`,
-            color: darkPalette.neutral[50],
-          },
-        }}
-      >
-        <DialogTitle sx={{ color: darkPalette.neutral[50], fontWeight: 700 }}>
-          Thêm Camera Mới
-        </DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            {formError && <Alert severity="error">{formError}</Alert>}
-            <TextField
-              label="Mô tả / Tên camera"
-              value={createForm.udCameraDeviceSuDung}
-              onChange={(e) =>
-                setCreateForm((f) => ({
-                  ...f,
-                  udCameraDeviceSuDung: e.target.value,
-                }))
-              }
-              fullWidth
-              size="small"
-              sx={textFieldSx}
-            />
-            <TextField
-              label="IP Address"
-              value={createForm.udCameraDeviceIpAdress}
-              onChange={(e) =>
-                setCreateForm((f) => ({
-                  ...f,
-                  udCameraDeviceIpAdress: e.target.value,
-                }))
-              }
-              fullWidth
-              size="small"
-              sx={textFieldSx}
-            />
-            <TextField
-              label="Port"
-              type="number"
-              value={createForm.udCameraDevicePort}
-              onChange={(e) =>
-                setCreateForm((f) => ({
-                  ...f,
-                  udCameraDevicePort: e.target.value,
-                }))
-              }
-              fullWidth
-              size="small"
-              sx={textFieldSx}
-            />
-            <TextField
-              label="Username"
-              value={createForm.udCameraDeviceUsername}
-              onChange={(e) =>
-                setCreateForm((f) => ({
-                  ...f,
-                  udCameraDeviceUsername: e.target.value,
-                }))
-              }
-              fullWidth
-              size="small"
-              sx={textFieldSx}
-            />
-            <TextField
-              label="Password"
-              type="password"
-              value={createForm.udCameraDevicePassword}
-              onChange={(e) =>
-                setCreateForm((f) => ({
-                  ...f,
-                  udCameraDevicePassword: e.target.value,
-                }))
-              }
-              fullWidth
-              size="small"
-              sx={textFieldSx}
-            />
-            <TextField
-              label="ID Đầu ghi"
-              type="number"
-              value={createForm.udCameraDeviceIdDauGhi}
-              onChange={(e) =>
-                setCreateForm((f) => ({
-                  ...f,
-                  udCameraDeviceIdDauGhi: e.target.value,
-                }))
-              }
-              fullWidth
-              size="small"
-              sx={textFieldSx}
-            />
-            <TextField
-              label="Kênh"
-              type="number"
-              value={createForm.udCameraDeviceIdChanel}
-              onChange={(e) =>
-                setCreateForm((f) => ({
-                  ...f,
-                  udCameraDeviceIdChanel: e.target.value,
-                }))
-              }
-              fullWidth
-              size="small"
-              sx={textFieldSx}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setCreateOpen(false)}
-            sx={{ color: darkPalette.neutral[400], textTransform: "none" }}
-          >
-            Hủy
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleCreateSubmit}
-            disabled={loading}
-            sx={{
-              bgcolor: darkPalette.secondary.main,
-              "&:hover": {
-                bgcolor:
-                  darkPalette.secondary.dark ?? darkPalette.secondary.main,
-              },
-              textTransform: "none",
-              fontWeight: 600,
-            }}
-          >
-            {loading ? (
-              <CircularProgress size={20} color="inherit" />
-            ) : (
-              "Tạo Camera"
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <CreateCameraDialog
+        open={dialog.createOpen}
+        loading={loading}
+        onClose={() => dispatch({ type: "CLOSE_CREATE" })}
+        onSubmit={createCamera}
+      />
 
-      <Dialog
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            bgcolor: darkPalette.background.surface,
-            border: `1px solid ${darkPalette.divider}`,
-            color: darkPalette.neutral[50],
-          },
-        }}
-      >
-        <DialogTitle sx={{ color: darkPalette.neutral[50], fontWeight: 700 }}>
-          Chỉnh sửa Camera #{selectedCamera?.udCameraDeviceID}
-        </DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            {formError && <Alert severity="error">{formError}</Alert>}
-            <TextField
-              label="ID Đầu ghi"
-              type="number"
-              value={patchForm.udCameraDeviceIdDauGhi}
-              onChange={(e) =>
-                setPatchForm((f) => ({
-                  ...f,
-                  udCameraDeviceIdDauGhi: e.target.value,
-                }))
-              }
-              fullWidth
-              size="small"
-              sx={textFieldSx}
-            />
-            <TextField
-              label="Kênh"
-              type="number"
-              value={patchForm.udCameraDeviceIdChanel}
-              onChange={(e) =>
-                setPatchForm((f) => ({
-                  ...f,
-                  udCameraDeviceIdChanel: e.target.value,
-                }))
-              }
-              fullWidth
-              size="small"
-              sx={textFieldSx}
-            />
-            <TextField
-              label="Username"
-              value={patchForm.udCameraDeviceUsername}
-              onChange={(e) =>
-                setPatchForm((f) => ({
-                  ...f,
-                  udCameraDeviceUsername: e.target.value,
-                }))
-              }
-              fullWidth
-              size="small"
-              sx={textFieldSx}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setEditOpen(false)}
-            sx={{ color: darkPalette.neutral[400], textTransform: "none" }}
-          >
-            Hủy
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handlePatchSubmit}
-            disabled={loading}
-            sx={{
-              bgcolor: darkPalette.secondary.main,
-              "&:hover": {
-                bgcolor:
-                  darkPalette.secondary.dark ?? darkPalette.secondary.main,
-              },
-              textTransform: "none",
-              fontWeight: 600,
-            }}
-          >
-            {loading ? (
-              <CircularProgress size={20} color="inherit" />
-            ) : (
-              "Lưu thay đổi"
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <EditCameraDialog
+        key={dialog.selectedCamera?.udCameraDeviceID ?? "none"}
+        open={dialog.editOpen}
+        loading={loading}
+        camera={dialog.selectedCamera}
+        onClose={() => dispatch({ type: "CLOSE_EDIT" })}
+        onSubmit={patchCamera}
+      />
 
-      <Dialog
-        open={deleteOpen}
-        onClose={() => setDeleteOpen(false)}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{
-          sx: {
-            bgcolor: darkPalette.background.surface,
-            border: `1px solid ${darkPalette.divider}`,
-            color: darkPalette.neutral[50],
-          },
-        }}
-      >
-        <DialogTitle sx={{ color: darkPalette.neutral[50], fontWeight: 700 }}>
-          Xác nhận xóa
-        </DialogTitle>
-        <DialogContent>
-          <Typography sx={{ color: darkPalette.neutral[300] }}>
-            Bạn có chắc muốn xóa{" "}
-            <strong style={{ color: darkPalette.neutral[50] }}>
-              {selectedCamera ? getCameraDisplayName(selectedCamera) : ""}
-            </strong>
-            ? Hành động này không thể hoàn tác.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setDeleteOpen(false)}
-            sx={{ color: darkPalette.neutral[400], textTransform: "none" }}
-          >
-            Hủy
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleDeleteConfirm}
-            disabled={loading}
-            sx={{
-              bgcolor: darkPalette.semantic?.error ?? "#ef4444",
-              "&:hover": { bgcolor: "#dc2626" },
-              textTransform: "none",
-              fontWeight: 600,
-            }}
-          >
-            {loading ? <CircularProgress size={20} color="inherit" /> : "Xóa"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <DeleteCameraDialog
+        open={dialog.deleteOpen}
+        loading={loading}
+        camera={dialog.selectedCamera}
+        cameraDisplayName={
+          dialog.selectedCamera
+            ? getCameraDisplayName(dialog.selectedCamera)
+            : ""
+        }
+        onClose={() => dispatch({ type: "CLOSE_DELETE" })}
+        onConfirm={handleDeleteConfirm}
+      />
     </>
   );
 };
-
-export default CameraManagementPage;

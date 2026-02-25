@@ -197,5 +197,3 @@ export const CameraFooter = () => {
     </Box>
   );
 };
-
-export default CameraFooter;

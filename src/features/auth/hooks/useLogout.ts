@@ -1,5 +1,5 @@
 import { useState } from "react";
-import useAuthStore from "@features/auth/stores/auth.store";
+import { useAuthStore } from "@features/auth/stores/auth.store";
 import { authApi } from "@features/auth/services/auth.api";
 
 export const useLogout = () => {

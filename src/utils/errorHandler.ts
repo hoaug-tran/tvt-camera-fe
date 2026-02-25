@@ -1,22 +1,14 @@
-/**
- * Shared error handling utilities for API calls
- */
-
-export interface ApiError {
+interface ApiError {
   message: string;
   statusCode?: number;
   details?: unknown;
 }
 
-/**
- * Parse API error response and extract meaningful message
- */
-export const parseApiError = (
+const parseApiError = (
   status: number,
   responseData?: unknown,
   fallbackMessage = "An error occurred",
 ): string => {
-  // Check if response is JSON with error message
   if (typeof responseData === "object" && responseData !== null) {
     const data = responseData as Record<string, unknown>;
     if (typeof data.message === "string") {
@@ -30,7 +22,6 @@ export const parseApiError = (
     }
   }
 
-  // Fallback to status-based messages
   switch (status) {
     case 400:
       return "Dữ liệu không hợp lệ";
@@ -50,9 +41,6 @@ export const parseApiError = (
   }
 };
 
-/**
- * Handle API response errors consistently
- */
 export const handleApiError = async (response: Response): Promise<never> => {
   let errorData: unknown;
 
@@ -70,9 +58,6 @@ export const handleApiError = async (response: Response): Promise<never> => {
   throw error;
 };
 
-/**
- * Log error with context
- */
 export const logError = (
   context: string,
   error: unknown,

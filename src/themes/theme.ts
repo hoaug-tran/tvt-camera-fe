@@ -243,6 +243,3 @@ export const darkTheme = createTheme({
     divider: darkPalette.divider,
   },
 });
-
-// Default export (dark theme as primary)
-export const theme = darkTheme;

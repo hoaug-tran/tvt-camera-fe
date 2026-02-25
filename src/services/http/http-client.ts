@@ -5,7 +5,7 @@ import axios, {
 import { useAuthStore } from "@features/auth/stores/auth.store";
 import { authApi } from "@features/auth/services/auth.api";
 
-export const createHttpClient = (): AxiosInstance => {
+const createHttpClient = (): AxiosInstance => {
   const apiUrl = import.meta.env.VITE_API_URL as string;
 
   const client = axios.create({

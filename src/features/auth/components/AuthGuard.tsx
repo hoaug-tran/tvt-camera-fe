@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import { Box, CircularProgress } from "@mui/material";
 import { useEffect, useState } from "react";
 import { authApi } from "@features/auth/services/auth.api";
-import useAuthStore from "@features/auth/stores/auth.store";
+import { useAuthStore } from "@features/auth/stores/auth.store";
 
 export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, accessToken } = useAuth();
@@ -21,6 +21,7 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
         const result = await authApi.refresh();
         login({ username: "user", role: "user" }, result.accessToken);
       } catch {
+        // refresh token invalid or expired — user must log in again
       } finally {
         setLoading(false);
       }
@@ -50,5 +51,3 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
 
   return <>{children}</>;
 };
-
-export default AuthGuard;

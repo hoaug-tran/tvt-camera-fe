@@ -211,9 +211,6 @@ export const lightPalette = {
   },
 };
 
-// Root palette export (dark theme as primary)
-export const palette = darkPalette;
-
 // Màu chữ cho dark theme
 export const darkTextColor = {
   primary: darkPalette.neutral[50], // Off-white
@@ -231,5 +228,3 @@ export const lightTextColor = {
   disabled: lightPalette.neutral[600], // Lighter gray
   inverse: "#fafaf9", // Light text on dark
 };
-
-export const textColor = darkTextColor;

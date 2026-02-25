@@ -222,10 +222,10 @@ export const CameraSidebar = ({
               { icon: ArrowDown, label: "down" },
               { icon: ArrowDownRight, label: "down-right" },
             ] as const
-          ).map((item, index) =>
+          ).map((item) =>
             item === null ? (
               <Box
-                key={index}
+                key="ptz-center"
                 sx={{
                   display: "flex",
                   alignItems: "center",

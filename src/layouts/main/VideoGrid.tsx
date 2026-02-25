@@ -93,5 +93,3 @@ export const VideoGrid = ({ cameraId }: VideoGridProps) => {
     </Box>
   );
 };
-
-export default VideoGrid;
