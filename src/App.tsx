@@ -1,8 +1,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import LoginPage from "./features/auth/pages/LoginPage";
-import AuthGuard from "./features/auth/components/AuthGuard";
-import ViewPage from "./pages/ViewPage";
-import DashboardPage from "./pages/DashboardPage";
+import { LoginPage } from "./features/auth/pages/LoginPage";
+import { AuthGuard } from "@features/auth/components/AuthGuard";
+import { HomePage } from "./pages/HomePage";
+import { CameraManagementPage } from "@features/cameras/pages/CameraManagementPage";
 
 function App() {
   return (
@@ -10,23 +10,23 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route
-          path="/view"
+          path="/home"
           element={
             <AuthGuard>
-              <ViewPage />
+              <HomePage />
             </AuthGuard>
           }
         />
         <Route
-          path="/dashboard"
+          path="/cameras/management"
           element={
             <AuthGuard>
-              <DashboardPage />
+              <CameraManagementPage />
             </AuthGuard>
           }
         />
-        <Route path="/" element={<Navigate to="/login" />} />
-        <Route path="*" element={<Navigate to="/login" />} />
+        <Route path="/" element={<Navigate to="/home" />} />
+        <Route path="*" element={<Navigate to="/home" />} />
       </Routes>
     </>
   );
