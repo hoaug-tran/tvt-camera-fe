@@ -1,18 +1,16 @@
 import useAuthStore from "@features/auth/stores/auth.store";
 
-const useAuth = () => {
-  const { user, isAuthenticated, logout } = useAuthStore();
-
-  function hasRole(role: string) {
-    return user?.role === role;
-  }
+/**
+ * Hook để access auth state và methods
+ * Thay thế cách dùng: token -> accessToken
+ */
+export const useAuth = () => {
+  const { user, accessToken, isAuthenticated, logout } = useAuthStore();
 
   return {
     user,
+    accessToken,
     isAuthenticated,
     logout,
-    hasRole,
   };
 };
-
-export default useAuth;

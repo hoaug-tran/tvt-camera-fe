@@ -12,11 +12,11 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { Unlock } from "lucide-react";
-import useLogin from "@features/auth/hooks/useLogin";
-import { palette, textColor } from "@themes/palette";
+import { Lock } from "lucide-react";
+import { useLogin } from "@features/auth/hooks/useLogin";
+import { darkPalette } from "@themes/palette";
 
-const LoginPage = () => {
+export const LoginPage = () => {
   const { submit, loading } = useLogin();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -33,7 +33,7 @@ const LoginPage = () => {
     const res = await submit(username, password);
 
     if (res.ok) {
-      navigate("/view");
+      navigate("/");
     } else {
       setError(res.error || "Đã xảy ra lỗi");
     }
@@ -46,81 +46,68 @@ const LoginPage = () => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        backgroundImage: "url(/wallpaper.webp)",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundAttachment: "fixed",
+        backgroundImage: `linear-gradient(135deg, ${darkPalette.neutral[950]} 0%, ${darkPalette.neutral[900]} 100%)`,
         px: isMobile ? 2 : 0,
         py: 4,
-        position: "relative",
-        "&::before": {
-          content: '""',
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.4)",
-          zIndex: 0,
-        },
       }}
     >
       <Paper
-        elevation={isMobile ? 1 : 4}
+        elevation={0}
         sx={{
-          width: "450px",
-          maxWidth: isMobile ? "100%" : "600px",
-          p: isMobile ? 3 : 6,
-          borderRadius: isMobile ? 1 : 2,
-          border: isMobile ? "none" : `1px solid ${palette.neutral[200]}`,
-          bgcolor: palette.background.surface,
-          position: "relative",
-          zIndex: 1,
+          width: isMobile ? "100%" : "420px",
+          p: isMobile ? 3 : 5,
+          borderRadius: "12px",
+          bgcolor: darkPalette.background.surface,
+          border: `1px solid ${darkPalette.divider}`,
+          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
         }}
       >
-        <Stack spacing={isMobile ? 2.5 : 4}>
+        <Stack spacing={isMobile ? 2.5 : 3}>
+          {/* Header */}
           <Box sx={{ textAlign: "center", mb: isMobile ? 1 : 2 }}>
             <Box
               sx={{
                 display: "flex",
                 justifyContent: "center",
                 mb: 2,
+                p: 1.5,
+                borderRadius: "8px",
               }}
             >
-              <Unlock size={isMobile ? 28 : 40} color={palette.neutral[800]} />
+              <Lock size={32} color={darkPalette.secondary.main} />
             </Box>
             <Typography
-              variant={isMobile ? "h6" : "h4"}
+              variant={isMobile ? "h6" : "h5"}
               sx={{
                 fontWeight: 700,
-                color: textColor.primary,
+                color: darkPalette.neutral[50],
+                letterSpacing: "0.5px",
               }}
             >
-              TVT CAMERA
+              QUẢN LÍ CAMERA TVT
             </Typography>
             <Typography
-              variant={isMobile ? "caption" : "body1"}
+              variant="body2"
               sx={{
-                color: textColor.secondary,
-                mt: 0.5,
-                display: "block",
+                color: darkPalette.neutral[400],
+                mt: 1,
               }}
             >
-              Đăng nhập trang quản lý hệ thống camera
+              Đăng nhập hệ thống quản lý
             </Typography>
           </Box>
 
+          {/* Error Alert */}
           {error && (
             <Alert
               severity="error"
               sx={{
-                borderRadius: 1,
-                fontSize: isMobile ? 12 : 13,
-                display: "flex",
-                alignItems: "center",
+                borderRadius: "8px",
+                bgcolor: `rgba(239, 68, 68, 0.1)`,
+                border: `1px solid ${darkPalette.semantic.error}`,
+                color: darkPalette.semantic.error,
                 "& .MuiAlert-icon": {
-                  marginRight: 1.5,
-                  marginTop: 0,
+                  color: darkPalette.semantic.error,
                 },
               }}
             >
@@ -128,6 +115,7 @@ const LoginPage = () => {
             </Alert>
           )}
 
+          {/* Form */}
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <Stack spacing={2}>
               <TextField
@@ -138,9 +126,35 @@ const LoginPage = () => {
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={loading}
                 autoComplete="username"
+                variant="outlined"
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    bgcolor: palette.neutral[50],
+                    bgcolor: darkPalette.neutral[900],
+                    borderRadius: "8px",
+                    fontSize: isMobile ? "0.9rem" : "1rem",
+                    transition: "all 0.2s ease",
+                    "&:hover": {
+                      bgcolor: darkPalette.neutral[800],
+                    },
+                    "&.Mui-focused": {
+                      bgcolor: darkPalette.neutral[800],
+                      "& fieldset": {
+                        borderColor: darkPalette.secondary.main,
+                      },
+                    },
+                  },
+                  "& .MuiOutlinedInput-input": {
+                    color: darkPalette.neutral[50],
+                  },
+                  "& .MuiInputBase-input::placeholder": {
+                    color: darkPalette.neutral[500],
+                    opacity: 0.7,
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: darkPalette.neutral[400],
+                    "&.Mui-focused": {
+                      color: darkPalette.secondary.main,
+                    },
                   },
                 }}
               />
@@ -154,9 +168,35 @@ const LoginPage = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
                 autoComplete="current-password"
+                variant="outlined"
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    bgcolor: palette.neutral[50],
+                    bgcolor: darkPalette.neutral[900],
+                    borderRadius: "8px",
+                    fontSize: isMobile ? "0.9rem" : "1rem",
+                    transition: "all 0.2s ease",
+                    "&:hover": {
+                      bgcolor: darkPalette.neutral[800],
+                    },
+                    "&.Mui-focused": {
+                      bgcolor: darkPalette.neutral[800],
+                      "& fieldset": {
+                        borderColor: darkPalette.secondary.main,
+                      },
+                    },
+                  },
+                  "& .MuiOutlinedInput-input": {
+                    color: darkPalette.neutral[50],
+                  },
+                  "& .MuiInputBase-input::placeholder": {
+                    color: darkPalette.neutral[500],
+                    opacity: 0.7,
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: darkPalette.neutral[400],
+                    "&.Mui-focused": {
+                      color: darkPalette.secondary.main,
+                    },
                   },
                 }}
               />
@@ -166,20 +206,26 @@ const LoginPage = () => {
                 fullWidth
                 disabled={loading || !username || !password}
                 sx={{
-                  mt: 1,
-                  height: isMobile ? 40 : 48,
-                  bgcolor: palette.neutral[800],
+                  mt: 2,
+                  height: isMobile ? 44 : 48,
+                  bgcolor: darkPalette.secondary.main,
                   color: "#fff",
                   textTransform: "none",
                   fontWeight: 600,
-                  fontSize: isMobile ? 14 : 15,
-                  borderRadius: 1,
+                  fontSize: isMobile ? "0.9rem" : "1rem",
+                  borderRadius: "8px",
+                  transition: "all 0.3s ease",
                   "&:hover": {
-                    bgcolor: palette.neutral[900],
+                    bgcolor: darkPalette.secondary.dark,
+                    boxShadow: `0 8px 24px rgba(232, 92, 74, 0.3)`,
+                    transform: "translateY(-2px)",
+                  },
+                  "&:active": {
+                    transform: "translateY(0)",
                   },
                   "&:disabled": {
-                    bgcolor: palette.neutral[300],
-                    color: palette.neutral[500],
+                    bgcolor: darkPalette.neutral[700],
+                    color: darkPalette.neutral[500],
                   },
                 }}
               >
@@ -191,6 +237,18 @@ const LoginPage = () => {
               </Button>
             </Stack>
           </Box>
+
+          {/* Footer Info */}
+          <Typography
+            variant="caption"
+            sx={{
+              textAlign: "center",
+              color: darkPalette.neutral[500],
+              mt: 1,
+            }}
+          >
+            Hệ thống quản lý camera TVT © 2025
+          </Typography>
         </Stack>
       </Paper>
     </Box>

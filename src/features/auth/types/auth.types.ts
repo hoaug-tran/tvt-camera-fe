@@ -1,18 +1,47 @@
-export interface LoginRequest {
+interface LoginRequest {
   username: string;
   password: string;
 }
 
-export interface LoginResponse {
-  role: "admin" | "user";
-  message: string;
+interface LoginResponse {
+  accessToken: string;
+  expiresAt: string;
+  role: string;
+}
+
+interface RefreshResponse {
   accessToken: string;
   expiresAt: string;
 }
 
-export interface User {
+interface JwtPayload {
+  dvr_id?: string;
+  username?: string;
+  type?: string;
+  exp?: number;
+}
+
+interface User {
   username: string;
   userId?: string;
   displayName?: string;
   role: "admin" | "user";
 }
+
+interface AuthState {
+  user: User | null;
+  accessToken: string | null;
+  isAuthenticated: boolean;
+
+  setAuth: (user: User, accessToken: string) => void;
+  clearAuth: () => void;
+}
+
+export type {
+  LoginRequest,
+  LoginResponse,
+  RefreshResponse,
+  JwtPayload,
+  User,
+  AuthState,
+};

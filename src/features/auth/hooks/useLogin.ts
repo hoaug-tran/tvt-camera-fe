@@ -8,7 +8,7 @@ interface LoginResult {
   error?: string;
 }
 
-const useLogin = () => {
+export const useLogin = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuthStore();
 
@@ -24,7 +24,7 @@ const useLogin = () => {
       login(
         {
           username,
-          role: "admin",
+          role: response.role.toLowerCase() as "admin" | "user",
         },
         response.accessToken,
       );
@@ -45,5 +45,3 @@ const useLogin = () => {
 
   return { submit, loading };
 };
-
-export default useLogin;
