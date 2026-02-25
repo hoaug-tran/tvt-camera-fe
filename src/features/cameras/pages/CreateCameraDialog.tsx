@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -49,13 +49,6 @@ export const CreateCameraDialog = ({
   const [createForm, setCreateForm] =
     useState<CreateFormState>(defaultCreateForm);
   const [formError, setFormError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (open) {
-      setCreateForm(defaultCreateForm);
-      setFormError(null);
-    }
-  }, [open]);
 
   const textFieldSx = {
     "& .MuiOutlinedInput-root": {
@@ -233,8 +226,7 @@ export const CreateCameraDialog = ({
           sx={{
             bgcolor: darkPalette.secondary.main,
             "&:hover": {
-              bgcolor:
-                darkPalette.secondary.dark ?? darkPalette.secondary.main,
+              bgcolor: darkPalette.secondary.dark ?? darkPalette.secondary.main,
             },
             textTransform: "none",
             fontWeight: 600,

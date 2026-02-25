@@ -305,6 +305,7 @@ export const CameraManagementPage = () => {
       </Box>
 
       <CreateCameraDialog
+        key={String(dialog.createOpen)}
         open={dialog.createOpen}
         loading={loading}
         onClose={() => dispatch({ type: "CLOSE_CREATE" })}
