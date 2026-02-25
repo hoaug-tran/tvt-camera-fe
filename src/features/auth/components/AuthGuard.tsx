@@ -1,7 +1,7 @@
 import { useAuth } from "@features/auth/hooks/useAuth";
 import { Navigate } from "react-router-dom";
 import { Box, CircularProgress } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { authApi } from "@features/auth/services/auth.api";
 import { useAuthStore } from "@features/auth/stores/auth.store";
 
@@ -9,8 +9,14 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, accessToken } = useAuth();
   const { login } = useAuthStore();
   const [loading, setLoading] = useState(true);
+  const hasChecked = useRef(false);
 
   useEffect(() => {
+    // Only run once on mount to restore session from refresh token cookie.
+    // Never re-run after logout — that would cause a spurious 401 refresh call.
+    if (hasChecked.current) return;
+    hasChecked.current = true;
+
     if (isAuthenticated && accessToken) {
       setLoading(false);
       return;
@@ -28,7 +34,8 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     };
 
     tryRefresh();
-  }, [isAuthenticated, accessToken, login]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (loading) {
     return (

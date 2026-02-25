@@ -31,9 +31,13 @@ jobs:
       - name: Enforce minimum score
         if: github.event_name == 'push'
         run: |
-          SCORE=$(npx -y react-doctor@latest . --score)
+          SCORE=$(npx -y react-doctor@latest . --score 2>/dev/null | tail -1 | tr -d '[:space:]')
           echo "React Doctor score: $SCORE"
+          echo "## React Doctor" >> $GITHUB_STEP_SUMMARY
+          echo "**Score: $SCORE / 100**" >> $GITHUB_STEP_SUMMARY
           if [ "$SCORE" -lt 70 ]; then
-            echo "Score below threshold (70). Failing build."
+            echo "Score below threshold (70). Failing build." >> $GITHUB_STEP_SUMMARY
             exit 1
+          else
+            echo "Score is above threshold (70)." >> $GITHUB_STEP_SUMMARY
           fi
