@@ -1,0 +1,39 @@
+name: React Doctor
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  react-doctor:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run React Doctor
+        id: doctor
+        uses: millionco/react-doctor@main
+        with:
+          diff: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Fail CI if score < 70
+      - name: Enforce minimum score
+        if: github.event_name == 'push'
+        run: |
+          SCORE=$(npx -y react-doctor@latest . --score)
+          echo "React Doctor score: $SCORE"
+          if [ "$SCORE" -lt 70 ]; then
+            echo "Score below threshold (70). Failing build."
+            exit 1
+          fi
