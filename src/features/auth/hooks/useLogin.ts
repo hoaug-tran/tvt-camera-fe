@@ -1,4 +1,5 @@
 import { useState } from "react";
+import axios from "axios";
 import { useAuthStore } from "@features/auth/stores/auth.store";
 import { authApi } from "@features/auth/services/auth.api";
 import type { LoginRequest } from "@features/auth/types/auth.types";
@@ -9,49 +10,49 @@ interface LoginResult {
 }
 
 export const useLogin = () => {
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuthStore();
 
   const submit = async (
     username: string,
     password: string,
   ): Promise<LoginResult> => {
-    setLoading(true);
-
-    if (
-      username === "admin" &&
-      (password === "giang-dev" || password === "hoang-dev")
-    ) {
-      login({ username: "admin", role: "admin" }, "dev-token");
-      setLoading(false);
-      return { ok: true };
-    }
+    setIsLoading(true);
 
     try {
-      const credentials: LoginRequest = { username, password };
-      const response = await authApi.login(credentials);
+      const request: LoginRequest = { username, password };
+      const res = await authApi.login(request);
 
       login(
         {
+          userId: res.userId,
           username,
-          role: response.role.toLowerCase() as "admin" | "user",
+          displayName: res.displayName || username,
+          // TODO: Cần xoá trong tương lai
+          role: res.role.toLowerCase() as "admin" | "user",
         },
-        response.accessToken,
+        res.accessToken,
       );
 
       return { ok: true };
-    } catch (error) {
+    } catch (error: unknown) {
+      let message = "Tên đăng nhập hoặc mật khẩu không chính xác";
+
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const data = error.response.data as { message?: string };
+        message = data.message || message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+
       return {
         ok: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Tên đăng nhập hoặc mật khẩu không chính xác",
+        error: message,
       };
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  return { submit, loading };
+  return { submit, loading: isLoading };
 };
