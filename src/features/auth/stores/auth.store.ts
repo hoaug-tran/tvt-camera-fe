@@ -5,9 +5,11 @@ interface AuthState {
   user: User | null;
   accessToken: string | null;
   isAuthenticated: boolean;
+  isInitializing: boolean;
   login: (user: User, accessToken: string) => void;
   logout: () => void;
   updateAccessToken: (accessToken: string) => void;
+  setIsInitializing: (isInitializing: boolean) => void;
 }
 
 /**
@@ -34,6 +36,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   accessToken: null,
   isAuthenticated: false,
+  isInitializing: true,
 
   /**
    * Login sau khi đăng nhập thành công
@@ -45,6 +48,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       user,
       accessToken,
       isAuthenticated: true,
+      isInitializing: false,
     });
   },
 
@@ -57,6 +61,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       user: null,
       accessToken: null,
       isAuthenticated: false,
+      isInitializing: false,
     });
   },
 
@@ -67,5 +72,12 @@ export const useAuthStore = create<AuthState>((set) => ({
    */
   updateAccessToken: (accessToken: string) => {
     set({ accessToken });
+  },
+
+  /**
+   * Set initializing state cho useInitializeAuth
+   */
+  setIsInitializing: (isInitializing: boolean) => {
+    set({ isInitializing });
   },
 }));

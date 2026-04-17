@@ -3,8 +3,11 @@ import { LoginPage } from "./features/auth/pages/LoginPage";
 import { AuthGuard } from "@features/auth/components/AuthGuard";
 import { HomePage } from "./pages/HomePage";
 import { CameraManagementPage } from "@features/cameras/pages/CameraManagementPage";
+import { useInitializeAuth } from "@features/auth/hooks/useInitializeAuth";
 
 function App() {
+  useInitializeAuth();
+
   return (
     <>
       <Routes>

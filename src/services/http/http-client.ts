@@ -37,14 +37,14 @@ const createHttpClient = (): AxiosInstance => {
         _retry?: boolean;
       };
 
-      const isRefreshEndpoint =
+      const isAuthEndpoint =
         typeof originalRequest.url === "string" &&
-        originalRequest.url.includes("/auth/refresh");
+        originalRequest.url.includes("/auth/");
 
       if (
         error.response?.status === 401 &&
         !originalRequest._retry &&
-        !isRefreshEndpoint
+        !isAuthEndpoint
       ) {
         if (isRefreshing) {
           return new Promise((resolve) => {
