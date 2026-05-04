@@ -3,6 +3,7 @@ import { LoginPage } from "./features/auth/pages/LoginPage";
 import { AuthGuard } from "@features/auth/components/AuthGuard";
 import { HomePage } from "./pages/HomePage";
 import { CameraManagementPage } from "@features/cameras/pages/CameraManagementPage";
+import { CameraViewerPage } from "@features/cameras/pages/CameraViewerPage";
 import { useInitializeAuth } from "@features/auth/hooks/useInitializeAuth";
 
 function App() {
@@ -25,6 +26,14 @@ function App() {
           element={
             <AuthGuard>
               <CameraManagementPage />
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/cameras/viewer"
+          element={
+            <AuthGuard>
+              <CameraViewerPage />
             </AuthGuard>
           }
         />

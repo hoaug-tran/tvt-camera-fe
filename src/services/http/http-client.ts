@@ -6,7 +6,18 @@ import { useAuthStore } from "@features/auth/stores/auth.store";
 import { authApi } from "@features/auth/services/auth.api";
 
 const createHttpClient = (): AxiosInstance => {
-  const apiUrl = import.meta.env.VITE_API_URL as string;
+  const envApiUrl = import.meta.env.VITE_API_URL as string;
+  const currentHostname = window.location.hostname;
+
+  let apiUrl = envApiUrl;
+  const isLocalhost =
+    currentHostname === "localhost" || currentHostname === "127.0.0.1";
+
+  if (isLocalhost) {
+    apiUrl = "/api/v1";
+  } else {
+    apiUrl = `${window.location.protocol}//${currentHostname}:7014/api/v1`;
+  }
 
   const client = axios.create({
     baseURL: apiUrl,
