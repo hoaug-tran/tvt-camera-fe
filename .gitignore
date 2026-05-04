@@ -27,3 +27,5 @@ index-template.html
 cert.crt
 cert.key
 scratch/
+
+camera.local*.pem
