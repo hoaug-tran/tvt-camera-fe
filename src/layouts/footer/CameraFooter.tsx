@@ -21,7 +21,7 @@ import {
   Apps as Layout9Icon,
   ViewComfy as Layout16Icon,
 } from "@mui/icons-material";
-import { useGrid } from "@/features/cameras/context/useGrid";
+import { useGrid } from "@/features/cameras/hooks/useGrid";
 import { useCamerasStore } from "@features/cameras/stores/cameras.store";
 import { useSnapshot } from "@features/cameras/hooks/useSnapshot";
 import { darkPalette, darkTextColor } from "@/themes/palette";

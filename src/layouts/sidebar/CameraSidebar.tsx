@@ -29,7 +29,7 @@ import {
 } from "@mui/icons-material";
 import { darkPalette, darkTextColor } from "@/themes/palette";
 import { useCameras } from "@features/cameras/hooks/useCameras";
-import { useGrid } from "@/features/cameras/context/useGrid";
+import { useGrid } from "@/features/cameras/hooks/useGrid";
 
 interface CameraSidebarProps {
   onCameraSelect?: () => void;
@@ -223,7 +223,7 @@ export const CameraSidebar = ({ onCameraSelect }: CameraSidebarProps) => {
               { icon: ArrowLeft, label: "W" }, null, { icon: ArrowRight, label: "E" },
               { icon: ArrowDownLeft, label: "SW" }, { icon: ArrowDown, label: "S" }, { icon: ArrowDownRight, label: "SE" },
             ] as const
-          ).map((item, idx) =>
+          ).map((item) =>
             item === null ? (
               <Box key="ptz-center" sx={{
                 display: "flex",
@@ -237,7 +237,7 @@ export const CameraSidebar = ({ onCameraSelect }: CameraSidebarProps) => {
               </Box>
             ) : (
               <IconButton
-                key={idx}
+                key={`ptz-${item.label}`}
                 size="small"
                 sx={{
                   bgcolor: "rgba(255,255,255,0.05)",

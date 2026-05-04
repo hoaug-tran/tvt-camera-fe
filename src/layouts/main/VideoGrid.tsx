@@ -1,6 +1,6 @@
 import { Box, Typography, useTheme, useMediaQuery } from "@mui/material";
 import { CameraPlayer } from "@/features/cameras/components/CameraPlayer";
-import { useGrid } from "@/features/cameras/context/useGrid";
+import { useGrid } from "@/features/cameras/hooks/useGrid";
 import { useCameras } from "@/features/cameras/hooks/useCameras";
 import { darkPalette } from "@/themes/palette";
 
@@ -69,7 +69,7 @@ export const VideoGrid = () => {
 
         return (
           <Box
-            key={`${index}-${cameraId || "empty"}`}
+            key={`slot-${index}-${cameraId ?? "empty"}`}
             draggable={cameraId !== null}
             onDragStart={(e) => handleDragStart(e, index)}
             onDrop={(e) => handleDrop(e, index)}

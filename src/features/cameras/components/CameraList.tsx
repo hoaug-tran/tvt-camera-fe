@@ -1,19 +1,19 @@
 import { Box, CircularProgress, Alert, Typography } from "@mui/material";
 import { useCameras } from "@features/cameras/hooks/useCameras";
-import { useGrid } from "@/features/cameras/context/useGrid";
+import { useGrid } from "@/features/cameras/hooks/useGrid";
 
 export const CameraList = () => {
   const { cameras, loading, error } = useCameras();
   const { slots, setCameraInSlot, layout } = useGrid();
 
   const handleCameraClick = (cameraId: number) => {
-    // Tìm ô trống đầu tiên trong layout hiện tại
-    const firstEmptySlot = slots.slice(0, layout).findIndex(id => id === null);
-    
+    const firstEmptySlot = slots
+      .slice(0, layout)
+      .findIndex((id) => id === null);
+
     if (firstEmptySlot !== -1) {
       setCameraInSlot(firstEmptySlot, cameraId);
     } else {
-      // Nếu đầy thì ghi đè vào ô đầu tiên
       setCameraInSlot(0, cameraId);
     }
   };
@@ -27,7 +27,11 @@ export const CameraList = () => {
   }
 
   if (error) {
-    return <Alert severity="error" sx={{ m: 1 }}>{error}</Alert>;
+    return (
+      <Alert severity="error" sx={{ m: 1 }}>
+        {error}
+      </Alert>
+    );
   }
 
   return (
@@ -39,7 +43,10 @@ export const CameraList = () => {
               key={camera.udCameraDeviceID}
               draggable
               onDragStart={(e) => {
-                e.dataTransfer.setData("cameraId", camera.udCameraDeviceID.toString());
+                e.dataTransfer.setData(
+                  "cameraId",
+                  camera.udCameraDeviceID.toString(),
+                );
                 e.dataTransfer.effectAllowed = "move";
               }}
               onClick={() => handleCameraClick(camera.udCameraDeviceID)}
@@ -54,15 +61,19 @@ export const CameraList = () => {
                 "&:hover": {
                   bgcolor: "rgba(232, 92, 74, 0.15)",
                   borderColor: "rgba(232, 92, 74, 0.3)",
-                  transform: "translateX(4px)"
+                  transform: "translateX(4px)",
                 },
                 "&:active": {
                   bgcolor: "rgba(232, 92, 74, 0.25)",
                 },
               }}
             >
-              <Typography variant="body2" sx={{ color: "#eee", fontWeight: 500 }}>
-                {camera.udCameraDeviceSuDung || `Camera ${camera.udCameraDeviceID}`}
+              <Typography
+                variant="body2"
+                sx={{ color: "#eee", fontWeight: 500 }}
+              >
+                {camera.udCameraDeviceSuDung ||
+                  `Camera ${camera.udCameraDeviceID}`}
               </Typography>
               <Typography variant="caption" sx={{ color: "#666" }}>
                 IP: {camera.udCameraDeviceIpAdress}

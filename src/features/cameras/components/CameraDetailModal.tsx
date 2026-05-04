@@ -12,7 +12,7 @@ export const CameraDetailModal = ({
   onClose,
 }: CameraDetailModalProps) => {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 bg-slate-950/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
       <div className="bg-zinc-900 rounded-xl shadow-2xl max-w-5xl w-full max-h-[95vh] flex flex-col border border-zinc-700">
         <div className="flex items-center justify-between p-4 bg-zinc-800 rounded-t-xl border-b border-zinc-700">
           <div>
@@ -22,6 +22,8 @@ export const CameraDetailModal = ({
             <p className="text-xs text-zinc-400">Đang phát luồng chính (Main Stream) • Độ trễ thấp</p>
           </div>
           <button
+            type="button"
+            aria-label="Đóng chi tiết camera"
             onClick={onClose}
             className="p-2 hover:bg-zinc-700 rounded-full transition-colors text-zinc-400 hover:text-white"
           >
@@ -29,7 +31,7 @@ export const CameraDetailModal = ({
           </button>
         </div>
 
-        <div className="flex-1 flex items-center justify-center overflow-hidden bg-black p-2">
+        <div className="flex-1 flex items-center justify-center overflow-hidden bg-slate-950 p-2">
            <div className="w-full h-full max-h-[70vh]">
               <CameraPlayer 
                 cameraId={camera.udCameraDeviceID}
