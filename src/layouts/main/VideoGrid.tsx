@@ -1,95 +1,135 @@
-import { Box, Typography, CircularProgress } from "@mui/material";
+import { Box, Typography, useTheme, useMediaQuery } from "@mui/material";
 import { CameraPlayer } from "@/features/cameras/components/CameraPlayer";
-import useStreaming from "@/features/cameras/hooks/useStreaming";
+import { useGrid } from "@/features/cameras/context/useGrid";
+import { useCameras } from "@/features/cameras/hooks/useCameras";
+import { darkPalette } from "@/themes/palette";
 
-interface VideoGridProps {
-  cameraId: number | null;
-}
+export const VideoGrid = () => {
+  const {
+    layout,
+    slots,
+    setCameraInSlot,
+    swapSlots,
+    selectedSlot,
+    setSelectedSlot,
+  } = useGrid();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const { cameras } = useCameras();
 
-export const VideoGrid = ({ cameraId }: VideoGridProps) => {
-  const { isStreaming, isLoading, error } = useStreaming(cameraId);
+  const gridColumns = Math.sqrt(layout);
 
-  if (!cameraId) {
-    return (
-      <Box
-        sx={{
-          flex: 1,
-          minHeight: 0,
-          width: "100%",
-          bgcolor: "#0f0d0a",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Typography sx={{ color: "#666" }}>
-          Chọn camera để xem trực tiếp
-        </Typography>
-      </Box>
-    );
-  }
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    const sourceSlotIndex = e.dataTransfer.getData("sourceSlotIndex");
+    const cameraIdStr = e.dataTransfer.getData("cameraId");
 
-  if (isLoading) {
-    return (
-      <Box
-        sx={{
-          flex: 1,
-          minHeight: 0,
-          width: "100%",
-          bgcolor: "#0f0d0a",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 2,
-        }}
-      >
-        <CircularProgress sx={{ color: "#666" }} />
-        <Typography sx={{ color: "#666" }}>Đang khởi động stream...</Typography>
-      </Box>
-    );
-  }
+    if (sourceSlotIndex !== "") {
+      swapSlots(parseInt(sourceSlotIndex), targetIndex);
+    } else if (cameraIdStr) {
+      setCameraInSlot(targetIndex, parseInt(cameraIdStr));
+    }
+  };
 
-  if (error) {
-    return (
-      <Box
-        sx={{
-          flex: 1,
-          minHeight: 0,
-          width: "100%",
-          bgcolor: "#0f0d0a",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Typography sx={{ color: "#ff4444" }}>Lỗi: {error}</Typography>
-      </Box>
-    );
-  }
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    e.dataTransfer.setData("sourceSlotIndex", index.toString());
+  };
+
+  const activeSlots = slots.slice(0, layout);
 
   return (
     <Box
       sx={{
         flex: 1,
-        minHeight: 0,
-        width: "100%",
-        bgcolor: "#0f0d0a",
-        display: "flex",
-        alignItems: "center",
+        display: "grid",
+        gridTemplateColumns: isMobile ? "1fr" : `repeat(${gridColumns}, 1fr)`,
+        gridTemplateRows: isMobile
+          ? layout === 1
+            ? "1fr"
+            : `repeat(${Math.ceil(layout)}, 220px)`
+          : `repeat(${gridColumns}, 1fr)`,
+        gap: 0.75,
+        p: 0.75,
+        bgcolor: darkPalette.background.default,
+        overflowY: "auto",
+        alignItems: isMobile && layout === 1 ? "center" : "stretch",
         justifyContent: "center",
-        position: "relative",
-        p: 2,
-        overflow: "hidden",
+        height: "100%",
+        minHeight: 0,
       }}
     >
-      {isStreaming && (
-        <CameraPlayer
-          cameraId={cameraId}
-          isStreaming={true}
-          cameraName={`Camera ${cameraId}`}
-        />
-      )}
+      {activeSlots.map((cameraId, index) => {
+        const cameraInfo = cameras.find((c) => c.udCameraDeviceID === cameraId);
+        const isSelected = selectedSlot === index;
+        const focusColor = darkPalette.secondary.main;
+
+        return (
+          <Box
+            key={`${index}-${cameraId || "empty"}`}
+            draggable={cameraId !== null}
+            onDragStart={(e) => handleDragStart(e, index)}
+            onDrop={(e) => handleDrop(e, index)}
+            onDragOver={handleDragOver}
+            onClick={() => setSelectedSlot(index)}
+            sx={{
+              position: "relative",
+              width: "100%",
+              height: isMobile ? (layout === 1 ? "auto" : "220px") : "100%",
+              aspectRatio: isMobile && layout === 1 ? "16/9" : "auto",
+              border: `2.5px solid ${isSelected ? focusColor : darkPalette.divider}`,
+              bgcolor: darkPalette.background.surface,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
+              borderRadius: 2,
+              cursor: cameraId ? "grab" : "pointer",
+              transition: "all 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+              zIndex: isSelected ? 10 : 1,
+              "&:hover": {
+                borderColor: isSelected
+                  ? focusColor
+                  : darkPalette.secondary.main,
+                bgcolor: "rgba(255,255,255,0.02)",
+              },
+            }}
+          >
+            {cameraId ? (
+              <CameraPlayer
+                cameraId={cameraId}
+                cameraName={
+                  cameraInfo?.udCameraDeviceSuDung || `Camera ${cameraId}`
+                }
+                isSubStream={layout > 1}
+                slotIndex={index}
+              />
+            ) : (
+              <Box
+                sx={{
+                  textAlign: "center",
+                  opacity: 0.4,
+                  pointerEvents: "none",
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: darkPalette.neutral[400],
+                    letterSpacing: 0.5,
+                    fontWeight: 700,
+                  }}
+                >
+                  Ô TRỐNG {index + 1}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        );
+      })}
     </Box>
   );
 };
