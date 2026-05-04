@@ -16,8 +16,9 @@ import {
   Stack,
   Chip,
   Pagination,
+  Tooltip,
 } from "@mui/material";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowLeft } from "lucide-react";
 import { Navbar } from "@layouts/header/Navbar";
 import { useCameraManagement } from "@features/cameras/hooks/useCameraManagement";
 import type { CameraDevice } from "@features/cameras/types/camera.types";
@@ -25,6 +26,7 @@ import { darkPalette } from "@themes/palette";
 import { CreateCameraDialog } from "./CreateCameraDialog";
 import { EditCameraDialog } from "./EditCameraDialog";
 import { DeleteCameraDialog } from "./DeleteCameraDialog";
+import { useNavigate } from "react-router-dom";
 
 type DialogAction =
   | { type: "OPEN_CREATE" }
@@ -68,6 +70,7 @@ function dialogReducer(state: DialogState, action: DialogAction): DialogState {
 }
 
 export const CameraManagementPage = () => {
+  const navigate = useNavigate();
   const {
     cameras,
     loading,
@@ -103,10 +106,13 @@ export const CameraManagementPage = () => {
       size="small"
       sx={{
         bgcolor:
-          status === 1 ? "rgba(107, 168, 47, 0.2)" : "rgba(100, 100, 100, 0.2)",
+          status === 1
+            ? "rgba(107, 168, 47, 0.15)"
+            : "rgba(100, 100, 100, 0.1)",
         color: status === 1 ? "#6ba82f" : darkPalette.neutral[400],
-        fontWeight: 600,
-        fontSize: "0.75rem",
+        fontWeight: 700,
+        fontSize: "0.7rem",
+        height: 20,
       }}
     />
   );
@@ -115,6 +121,7 @@ export const CameraManagementPage = () => {
     color: darkPalette.neutral[300],
     borderBottom: `1px solid ${darkPalette.divider}`,
     fontSize: "0.85rem",
+    py: 1.2,
   };
 
   const tableHeadCellSx = {
@@ -125,30 +132,58 @@ export const CameraManagementPage = () => {
     textTransform: "uppercase" as const,
     letterSpacing: "0.5px",
     bgcolor: darkPalette.background.surface,
+    py: 1.5,
   };
 
   return (
-    <>
+    <Box sx={{ bgcolor: darkPalette.background.default, minHeight: "100vh" }}>
       <Navbar />
+
       <Box
         sx={{
-          minHeight: "calc(100vh - 64px)",
-          bgcolor: darkPalette.background.default,
-          p: 3,
+          pt: { xs: "72px", sm: "88px" },
+          pb: 4,
+          px: { xs: 2, sm: 4 },
+          mx: "auto",
+          maxWidth: "1400px",
         }}
       >
         <Stack
-          direction="row"
+          direction={{ xs: "column", sm: "row" }}
           justifyContent="space-between"
-          alignItems="center"
-          mb={3}
+          alignItems={{ xs: "flex-start", sm: "center" }}
+          spacing={2}
+          mb={4}
         >
-          <Typography
-            variant="h5"
-            sx={{ color: darkPalette.neutral[50], fontWeight: 700 }}
-          >
-            Quản lý Camera
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Tooltip title="Quay về trang chủ">
+              <IconButton
+                onClick={() => navigate("/home")}
+                sx={{
+                  bgcolor: "rgba(255,255,255,0.05)",
+                  color: darkPalette.neutral[300],
+                  "&:hover": {
+                    bgcolor: "rgba(255,255,255,0.1)",
+                    transform: "translateX(-2px)",
+                  },
+                  transition: "all 0.2s",
+                }}
+              >
+                <ArrowLeft size={20} />
+              </IconButton>
+            </Tooltip>
+            <Typography
+              variant="h5"
+              sx={{
+                color: darkPalette.neutral[50],
+                fontWeight: 800,
+                fontSize: { xs: "1.25rem", sm: "1.5rem" },
+              }}
+            >
+              Quản lý Camera
+            </Typography>
+          </Box>
+
           <Button
             variant="contained"
             startIcon={<Plus size={18} />}
@@ -156,11 +191,16 @@ export const CameraManagementPage = () => {
             sx={{
               bgcolor: darkPalette.secondary.main,
               "&:hover": {
-                bgcolor:
-                  darkPalette.secondary.dark ?? darkPalette.secondary.main,
+                bgcolor: darkPalette.secondary.dark,
+                transform: "translateY(-1px)",
+                boxShadow: `0 4px 12px rgba(232, 92, 74, 0.3)`,
               },
               textTransform: "none",
-              fontWeight: 600,
+              fontWeight: 700,
+              borderRadius: 2,
+              px: { xs: 2.5, sm: 3 },
+              py: 1,
+              width: { xs: "100%", sm: "auto" },
             }}
           >
             Thêm Camera
@@ -168,7 +208,7 @@ export const CameraManagementPage = () => {
         </Stack>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
             {error}
           </Alert>
         )}
@@ -177,11 +217,14 @@ export const CameraManagementPage = () => {
           component={Paper}
           sx={{
             bgcolor: darkPalette.background.surface,
+            backgroundImage: "none",
             border: `1px solid ${darkPalette.divider}`,
-            borderRadius: "8px",
+            borderRadius: 3,
+            overflow: "hidden",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
           }}
         >
-          <Table>
+          <Table size="small">
             <TableHead>
               <TableRow>
                 <TableCell sx={tableHeadCellSx}>ID</TableCell>
@@ -190,7 +233,9 @@ export const CameraManagementPage = () => {
                 <TableCell sx={tableHeadCellSx}>Kênh</TableCell>
                 <TableCell sx={tableHeadCellSx}>Username</TableCell>
                 <TableCell sx={tableHeadCellSx}>Trạng thái</TableCell>
-                <TableCell sx={tableHeadCellSx}>Thao tác</TableCell>
+                <TableCell sx={tableHeadCellSx} align="right">
+                  Thao tác
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -198,10 +243,10 @@ export const CameraManagementPage = () => {
                 <TableRow>
                   <TableCell
                     colSpan={7}
-                    sx={{ ...tableCellSx, textAlign: "center", py: 4 }}
+                    sx={{ ...tableCellSx, textAlign: "center", py: 8 }}
                   >
                     <CircularProgress
-                      size={24}
+                      size={32}
                       sx={{ color: darkPalette.secondary.main }}
                     />
                   </TableCell>
@@ -211,9 +256,14 @@ export const CameraManagementPage = () => {
                 <TableRow>
                   <TableCell
                     colSpan={7}
-                    sx={{ ...tableCellSx, textAlign: "center", py: 4 }}
+                    sx={{
+                      ...tableCellSx,
+                      textAlign: "center",
+                      py: 8,
+                      color: darkPalette.neutral[500],
+                    }}
                   >
-                    Chưa có camera nào
+                    Chưa có thiết bị camera nào được cấu hình
                   </TableCell>
                 </TableRow>
               )}
@@ -222,18 +272,18 @@ export const CameraManagementPage = () => {
                   <TableRow
                     key={camera.udCameraDeviceID}
                     sx={{
-                      "&:hover": { bgcolor: "rgba(255,255,255,0.03)" },
+                      "&:hover": { bgcolor: "rgba(255,255,255,0.02)" },
                       transition: "background 0.15s ease",
                     }}
                   >
-                    <TableCell sx={tableCellSx}>
-                      {camera.udCameraDeviceID}
+                    <TableCell sx={{ ...tableCellSx, fontWeight: 700 }}>
+                      #{camera.udCameraDeviceID}
                     </TableCell>
                     <TableCell
                       sx={{
                         ...tableCellSx,
                         color: darkPalette.neutral[50],
-                        fontWeight: 500,
+                        fontWeight: 600,
                       }}
                     >
                       {getCameraDisplayName(camera)}
@@ -250,32 +300,40 @@ export const CameraManagementPage = () => {
                     <TableCell sx={tableCellSx}>
                       {getStatusChip(camera.udCameraDeviceConnectionStatus)}
                     </TableCell>
-                    <TableCell sx={tableCellSx}>
-                      <Stack direction="row" spacing={1}>
-                        <IconButton
-                          size="small"
-                          onClick={() =>
-                            dispatch({ type: "OPEN_EDIT", camera })
-                          }
-                          sx={{
-                            color: darkPalette.secondary.main,
-                            "&:hover": { bgcolor: "rgba(232, 92, 74, 0.1)" },
-                          }}
-                        >
-                          <Pencil size={16} />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() =>
-                            dispatch({ type: "OPEN_DELETE", camera })
-                          }
-                          sx={{
-                            color: darkPalette.semantic?.error ?? "#ef4444",
-                            "&:hover": { bgcolor: "rgba(239, 68, 68, 0.1)" },
-                          }}
-                        >
-                          <Trash2 size={16} />
-                        </IconButton>
+                    <TableCell sx={tableCellSx} align="right">
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        justifyContent="flex-end"
+                      >
+                        <Tooltip title="Chỉnh sửa">
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              dispatch({ type: "OPEN_EDIT", camera })
+                            }
+                            sx={{
+                              color: darkPalette.secondary.main,
+                              "&:hover": { bgcolor: "rgba(232, 92, 74, 0.1)" },
+                            }}
+                          >
+                            <Pencil size={18} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Xóa">
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              dispatch({ type: "OPEN_DELETE", camera })
+                            }
+                            sx={{
+                              color: "#ef4444",
+                              "&:hover": { bgcolor: "rgba(239, 68, 68, 0.1)" },
+                            }}
+                          >
+                            <Trash2 size={18} />
+                          </IconButton>
+                        </Tooltip>
                       </Stack>
                     </TableCell>
                   </TableRow>
@@ -285,7 +343,7 @@ export const CameraManagementPage = () => {
         </TableContainer>
 
         {totalPages > 1 && (
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
             <Pagination
               count={totalPages}
               page={page}
@@ -293,9 +351,12 @@ export const CameraManagementPage = () => {
               sx={{
                 "& .MuiPaginationItem-root": {
                   color: darkPalette.neutral[400],
+                  borderRadius: 2,
                   "&.Mui-selected": {
                     bgcolor: darkPalette.secondary.main,
                     color: "#fff",
+                    fontWeight: 700,
+                    "&:hover": { bgcolor: darkPalette.secondary.dark },
                   },
                 },
               }}
@@ -333,6 +394,6 @@ export const CameraManagementPage = () => {
         onClose={() => dispatch({ type: "CLOSE_DELETE" })}
         onConfirm={handleDeleteConfirm}
       />
-    </>
+    </Box>
   );
 };

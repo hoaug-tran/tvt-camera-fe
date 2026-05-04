@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Box,
   Paper,
@@ -7,321 +6,319 @@ import {
   ListItem,
   ListItemButton,
   ListItemText,
-  Divider,
+  CircularProgress,
+  Alert,
   IconButton,
   Stack,
   Button,
-  CircularProgress,
-  Alert,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import {
-  ArrowUp,
-  ArrowDown,
-  ArrowLeft,
-  ArrowRight,
-  ArrowUpLeft,
-  ArrowUpRight,
-  ArrowDownLeft,
-  ArrowDownRight,
-  ZoomIn,
-  ZoomOut,
-} from "lucide-react";
-import { darkPalette } from "@/themes/palette";
+  North as ArrowUp,
+  South as ArrowDown,
+  West as ArrowLeft,
+  East as ArrowRight,
+  NorthWest as ArrowUpLeft,
+  NorthEast as ArrowUpRight,
+  SouthWest as ArrowDownLeft,
+  SouthEast as ArrowDownRight,
+  ZoomIn as ZoomInIcon,
+  ZoomOut as ZoomOutIcon,
+  Devices as DeviceIcon,
+} from "@mui/icons-material";
+import { darkPalette, darkTextColor } from "@/themes/palette";
 import { useCameras } from "@features/cameras/hooks/useCameras";
+import { useGrid } from "@/features/cameras/context/useGrid";
 
 interface CameraSidebarProps {
-  selectedCameraId: number | null;
-  onSelectCamera: (cameraId: number) => void;
+  onCameraSelect?: () => void;
 }
 
-export const CameraSidebar = ({
-  selectedCameraId,
-  onSelectCamera,
-}: CameraSidebarProps) => {
-  const [zoom, setZoom] = useState(1);
-  const { cameras, loading, error } = useCameras();
+export const CameraSidebar = ({ onCameraSelect }: CameraSidebarProps) => {
+  const { cameras, loading, error } = useCameras(1, 50);
+  const {
+    slots,
+    setCameraInSlot,
+    layout,
+    selectedSlot,
+    setSelectedSlot,
+    slotScales,
+    setSlotScale
+  } = useGrid();
 
-  const handleZoom = (direction: "in" | "out") => {
-    if (direction === "in") {
-      setZoom(Math.min(zoom + 0.1, 3));
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  const handleCameraClick = (cameraId: number) => {
+    // Tìm xem camera này đã có trong lưới chưa
+    const existingIndex = slots.slice(0, layout).findIndex(id => id === cameraId);
+
+    if (existingIndex !== -1) {
+      // Nếu đã có, chỉ cần Focus vào ô đó
+      setSelectedSlot(existingIndex);
     } else {
-      setZoom(Math.max(zoom - 0.1, 1));
+      // Nếu chưa có, tìm ô trống đầu tiên
+      const firstEmptySlot = slots.slice(0, layout).findIndex(id => id === null);
+      const targetIndex = firstEmptySlot !== -1 ? firstEmptySlot : 0;
+      setCameraInSlot(targetIndex, cameraId);
     }
+
+    if (onCameraSelect) onCameraSelect();
   };
 
-  const getCameraName = (suDung: string | null, id: number): string =>
-    suDung?.trim() || `Camera ${id}`;
+  const handleDragStart = (e: React.DragEvent, cameraId: number) => {
+    e.dataTransfer.setData("cameraId", cameraId.toString());
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleZoom = (direction: "in" | "out") => {
+    if (selectedSlot === null) return;
+
+    const currentScale = slotScales[selectedSlot] || 1;
+    const delta = direction === "in" ? 0.2 : -0.2;
+    setSlotScale(selectedSlot, currentScale + delta);
+  };
 
   const isOnline = (connectionStatus: number | null): boolean =>
     connectionStatus === 1;
 
   return (
-    <Paper
-      sx={{
-        width: "280px",
-        height: "calc(100vh - 64px)",
-        bgcolor: darkPalette.background.surface,
-        borderRadius: 0,
-        display: "flex",
-        flexDirection: "column",
-        boxShadow: "none",
-        border: "none",
-        borderRight: `1px solid ${darkPalette.divider}`,
-      }}
-    >
-      <Box sx={{ p: 2 }}>
-        <Typography
-          sx={{
-            fontSize: "0.75rem",
-            fontWeight: 600,
-            color: darkPalette.neutral[400],
-            textTransform: "uppercase",
-            letterSpacing: "0.3px",
-          }}
-        >
-          Danh sách thiết bị
+    <Box sx={{
+      display: "flex",
+      flexDirection: "column",
+      height: "100%",
+      bgcolor: darkPalette.background.surface,
+      borderRight: `1px solid ${darkPalette.divider}`,
+      overflow: "hidden"
+    }}>
+      {/* Header - Cố định */}
+      <Box sx={{ p: isMobile ? 1.5 : 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <DeviceIcon sx={{ color: darkPalette.secondary.main, fontSize: isMobile ? 18 : 20 }} />
+        <Typography variant="subtitle2" sx={{
+          fontWeight: "bold",
+          textTransform: "uppercase",
+          letterSpacing: 1.5,
+          color: darkTextColor.primary,
+          fontSize: isMobile ? "0.75rem" : "0.85rem"
+        }}>
+          DANH SÁCH CAMERA
         </Typography>
       </Box>
 
-      {loading && (
-        <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-          <CircularProgress
-            size={20}
-            sx={{ color: darkPalette.secondary.main }}
-          />
-        </Box>
-      )}
+      {/* Danh sách camera - Vùng cuộn linh hoạt */}
+      <Box sx={{
+        flex: 1,
+        minHeight: 0,
+        overflowY: "auto",
+        px: 1,
+        "&::-webkit-scrollbar": { width: "4px" },
+        "&::-webkit-scrollbar-thumb": { bgcolor: "rgba(255,255,255,0.1)", borderRadius: "10px" }
+      }}>
+        {loading && (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+            <CircularProgress size={24} color="secondary" />
+          </Box>
+        )}
 
-      {error && (
-        <Box sx={{ px: 1, pb: 1 }}>
-          <Alert severity="error" sx={{ fontSize: "0.75rem" }}>
-            {error}
-          </Alert>
-        </Box>
-      )}
+        {error && (
+          <Alert severity="error" sx={{ m: 1, fontSize: "0.75rem", bgcolor: 'rgba(232, 92, 74, 0.1)', color: darkPalette.secondary.light }}>{error}</Alert>
+        )}
 
-      <List
-        sx={{
-          flex: 1,
-          overflowY: "auto",
-          p: 1,
-          "&::-webkit-scrollbar": { width: "6px" },
-          "&::-webkit-scrollbar-track": { bgcolor: darkPalette.neutral[900] },
-          "&::-webkit-scrollbar-thumb": {
-            bgcolor: darkPalette.neutral[700],
-            borderRadius: "3px",
-            "&:hover": { bgcolor: darkPalette.neutral[600] },
-          },
-        }}
-      >
-        {cameras.map((camera) => (
-          <ListItem
-            key={camera.udCameraDeviceID}
-            disablePadding
-            sx={{ mb: 0.5 }}
-          >
-            <ListItemButton
-              selected={selectedCameraId === camera.udCameraDeviceID}
-              onClick={() => onSelectCamera(camera.udCameraDeviceID)}
-              sx={{
-                borderRadius: "6px",
-                bgcolor:
-                  selectedCameraId === camera.udCameraDeviceID
-                    ? `rgba(232, 92, 74, 0.15)`
-                    : "transparent",
-                borderLeft:
-                  selectedCameraId === camera.udCameraDeviceID
-                    ? `3px solid ${darkPalette.secondary.main}`
-                    : "3px solid transparent",
-                "&:hover": { bgcolor: `rgba(232, 92, 74, 0.1)` },
-                transition: "all 0.2s ease",
-              }}
+        <List>
+          {cameras.map((camera) => (
+            <ListItem
+              key={camera.udCameraDeviceID}
+              disablePadding
+              sx={{ mb: 0.5 }}
+              draggable
+              onDragStart={(e) => handleDragStart(e, camera.udCameraDeviceID)}
             >
-              <Box
+              <ListItemButton
+                selected={slots.slice(0, layout).includes(camera.udCameraDeviceID)}
+                onClick={() => handleCameraClick(camera.udCameraDeviceID)}
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                  width: "100%",
+                  borderRadius: 1,
+                  py: isMobile ? 0.8 : 1.1,
+                  bgcolor: "transparent",
+                  border: "1px solid transparent",
+                  "&.Mui-selected": {
+                    bgcolor: "rgba(232, 92, 74, 0.12)",
+                    borderColor: "rgba(232, 92, 74, 0.3)",
+                    "&:hover": { bgcolor: "rgba(232, 92, 74, 0.18)" }
+                  },
+                  "&:hover": { bgcolor: "rgba(255,255,255,0.03)" }
                 }}
               >
-                <Box
-                  sx={{
-                    width: "10px",
-                    height: "10px",
-                    borderRadius: "50%",
-                    bgcolor: isOnline(camera.udCameraDeviceConnectionStatus)
-                      ? "#6ba82f"
-                      : darkPalette.neutral[600],
-                    flexShrink: 0,
-                  }}
-                />
-                <ListItemText
-                  primary={getCameraName(
-                    camera.udCameraDeviceSuDung,
-                    camera.udCameraDeviceID,
-                  )}
-                  primaryTypographyProps={{
-                    fontSize: "0.85rem",
-                    fontWeight: 500,
-                    color: darkPalette.neutral[50],
-                  }}
-                  secondary={
-                    isOnline(camera.udCameraDeviceConnectionStatus)
-                      ? "online"
-                      : "offline"
-                  }
-                  secondaryTypographyProps={{
-                    fontSize: "0.75rem",
-                    color: darkPalette.neutral[400],
-                  }}
-                />
-              </Box>
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2, width: "100%" }}>
+                  <Box
+                    sx={{
+                      width: 8, height: 8, borderRadius: "50%",
+                      bgcolor: isOnline(camera.udCameraDeviceConnectionStatus) ? darkPalette.semantic.success : "#555",
+                      boxShadow: isOnline(camera.udCameraDeviceConnectionStatus) ? `0 0 8px ${darkPalette.semantic.success}` : "none"
+                    }}
+                  />
+                  <ListItemText
+                    primary={camera.udCameraDeviceSuDung || `Camera ${camera.udCameraDeviceID}`}
+                    primaryTypographyProps={{
+                      fontSize: isMobile ? "0.8rem" : "0.82rem",
+                      fontWeight: 600,
+                      color: darkTextColor.primary
+                    }}
+                    secondary={isOnline(camera.udCameraDeviceConnectionStatus) ? "Trực tuyến" : "Ngoại tuyến"}
+                    secondaryTypographyProps={{
+                      component: "span",
+                      sx: {
+                        fontSize: "0.68rem",
+                        color: darkTextColor.secondary,
+                        display: "block",
+                        mt: 0.1
+                      }
+                    }}
+                  />
+                </Box>
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
+      </Box>
 
-      <Divider sx={{ bgcolor: darkPalette.divider }} />
-
-      <Box sx={{ p: 2 }}>
-        <Typography
-          sx={{
-            fontSize: "0.8rem",
-            fontWeight: 600,
-            color: darkPalette.neutral[400],
-            textTransform: "uppercase",
-            mb: 1.5,
-            letterSpacing: "0.5px",
-          }}
-        >
-          Điều khiển PTZ
+      {/* Footer PTZ & Zoom */}
+      <Paper elevation={0} sx={{
+        p: isMobile ? 1.5 : 1.8,
+        borderTop: `1px solid ${darkPalette.divider}`,
+        borderRadius: 0,
+        bgcolor: darkPalette.background.surface,
+        flexShrink: 0
+      }}>
+        <Typography variant="caption" sx={{
+          color: selectedSlot !== null ? darkPalette.accent.main : "rgba(255,255,255,0.4)",
+          fontWeight: 800,
+          mb: isMobile ? 1 : 1.5,
+          display: "block",
+          letterSpacing: 1.2,
+          fontSize: isMobile ? "0.65rem" : "0.72rem",
+          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+          textShadow: selectedSlot !== null ? `0 0 10px ${darkPalette.accent.main}33` : "none",
+          textTransform: 'uppercase'
+        }}>
+          {selectedSlot !== null ? `ĐIỀU KHIỂN Ô ${selectedSlot + 1}` : 'CHỌN 1 Ô ĐỂ ĐIỀU KHIỂN'}
         </Typography>
 
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 1,
-            mb: 2,
-            p: 1,
-            bgcolor: darkPalette.neutral[900],
-            borderRadius: "8px",
-            border: `1px solid ${darkPalette.divider}`,
-          }}
-        >
+        {/* PTZ Grid */}
+        <Box sx={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: isMobile ? 0.75 : 0.8,
+          mb: isMobile ? 1.5 : 1.8,
+          maxWidth: isMobile ? "150px" : "170px",
+          mx: "auto",
+          opacity: selectedSlot !== null ? 1 : 0.3,
+          pointerEvents: selectedSlot !== null ? 'auto' : 'none',
+          transition: "opacity 0.2s"
+        }}>
           {(
             [
-              { icon: ArrowUpLeft, label: "up-left" },
-              { icon: ArrowUp, label: "up" },
-              { icon: ArrowUpRight, label: "up-right" },
-              { icon: ArrowLeft, label: "left" },
-              null,
-              { icon: ArrowRight, label: "right" },
-              { icon: ArrowDownLeft, label: "down-left" },
-              { icon: ArrowDown, label: "down" },
-              { icon: ArrowDownRight, label: "down-right" },
+              { icon: ArrowUpLeft, label: "NW" }, { icon: ArrowUp, label: "N" }, { icon: ArrowUpRight, label: "NE" },
+              { icon: ArrowLeft, label: "W" }, null, { icon: ArrowRight, label: "E" },
+              { icon: ArrowDownLeft, label: "SW" }, { icon: ArrowDown, label: "S" }, { icon: ArrowDownRight, label: "SE" },
             ] as const
-          ).map((item) =>
+          ).map((item, idx) =>
             item === null ? (
-              <Box
-                key="ptz-center"
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  bgcolor: darkPalette.neutral[800],
-                  border: `1px solid ${darkPalette.divider}`,
-                  borderRadius: "6px",
-                  color: darkPalette.neutral[500],
-                  fontSize: "0.9rem",
-                  fontWeight: 600,
-                  cursor: "default",
-                }}
-              >
-                PTZ
+              <Box key="ptz-center" sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                bgcolor: "rgba(255,255,255,0.03)",
+                borderRadius: 1.2,
+                aspectRatio: "1/1"
+              }}>
+                <Typography sx={{ fontSize: isMobile ? 8 : 9, fontWeight: 900, color: "white" }}>PTZ</Typography>
               </Box>
             ) : (
               <IconButton
-                key={item.label}
+                key={idx}
                 size="small"
                 sx={{
+                  bgcolor: "rgba(255,255,255,0.05)",
+                  color: "rgba(255,255,255,0.8)",
+                  borderRadius: 1.2,
+                  aspectRatio: "1/1",
                   width: "100%",
-                  bgcolor: darkPalette.neutral[800],
-                  color: darkPalette.secondary.main,
-                  border: `1px solid ${darkPalette.divider}`,
-                  borderRadius: "6px",
+                  height: "auto",
+                  p: isMobile ? 0.5 : 0.6,
                   "&:hover": {
-                    bgcolor: darkPalette.neutral[700],
-                    borderColor: darkPalette.secondary.main,
+                    bgcolor: darkPalette.secondary.main,
+                    color: "#fff",
+                    transform: "translateY(-2px)",
+                    boxShadow: `0 4px 12px ${darkPalette.secondary.main}44`
                   },
-                  transition: "all 0.2s ease",
+                  transition: "all 0.2s"
                 }}
               >
-                <item.icon size={16} />
+                <item.icon sx={{ fontSize: isMobile ? 16 : 18 }} />
               </IconButton>
-            ),
+            )
           )}
         </Box>
 
-        <Typography
-          sx={{
-            fontSize: "0.8rem",
-            fontWeight: 600,
-            color: darkPalette.neutral[400],
-            textTransform: "uppercase",
-            mb: 1,
-            letterSpacing: "0.5px",
-          }}
-        >
-          Zoom ({(zoom * 100).toFixed(0)}%)
-        </Typography>
-        <Stack direction="row" spacing={1}>
+        {/* Zoom Buttons */}
+        <Stack direction="row" spacing={1} sx={{
+          opacity: selectedSlot !== null ? 1 : 0.3,
+          pointerEvents: selectedSlot !== null ? 'auto' : 'none',
+          transition: "opacity 0.2s"
+        }}>
           <Button
-            variant="outlined"
-            size="small"
             fullWidth
+            size="small"
+            variant="outlined"
+            startIcon={<ZoomInIcon sx={{ fontSize: isMobile ? 14 : 15 }} />}
             onClick={() => handleZoom("in")}
-            startIcon={<ZoomIn size={18} />}
             sx={{
-              borderColor: darkPalette.secondary.main,
-              color: darkPalette.secondary.main,
-              bgcolor: "transparent",
-              fontSize: "0.8rem",
-              textTransform: "none",
-              fontWeight: 600,
+              fontSize: isMobile ? 10 : 11,
+              py: isMobile ? 0.7 : 0.8,
+              color: "#fff",
+              borderColor: "rgba(255,255,255,0.15)",
+              borderRadius: 1.5,
+              fontWeight: 700,
+              px: 0,
+              minWidth: 0,
               "&:hover": {
-                bgcolor: `rgba(232, 92, 74, 0.1)`,
-                borderColor: darkPalette.secondary.main,
-              },
+                borderColor: darkPalette.accent.main,
+                bgcolor: `${darkPalette.accent.main}11`,
+                color: darkPalette.accent.main
+              }
             }}
           >
-            Zoom +
+            PHÓNG TO
           </Button>
           <Button
-            variant="outlined"
-            size="small"
             fullWidth
+            size="small"
+            variant="outlined"
+            startIcon={<ZoomOutIcon sx={{ fontSize: isMobile ? 14 : 15 }} />}
             onClick={() => handleZoom("out")}
-            startIcon={<ZoomOut size={18} />}
             sx={{
-              borderColor: darkPalette.secondary.main,
-              color: darkPalette.secondary.main,
-              bgcolor: "transparent",
-              fontSize: "0.8rem",
-              textTransform: "none",
-              fontWeight: 600,
+              fontSize: isMobile ? 10 : 11,
+              py: isMobile ? 0.7 : 0.8,
+              color: "#fff",
+              borderColor: "rgba(255,255,255,0.15)",
+              borderRadius: 1.5,
+              fontWeight: 700,
+              px: 0,
+              minWidth: 0,
               "&:hover": {
-                bgcolor: `rgba(232, 92, 74, 0.1)`,
-                borderColor: darkPalette.secondary.main,
-              },
+                borderColor: darkPalette.accent.main,
+                bgcolor: `${darkPalette.accent.main}11`,
+                color: darkPalette.accent.main
+              }
             }}
           >
-            Zoom -
+            THU NHỎ
           </Button>
         </Stack>
-      </Box>
-    </Paper>
+      </Paper>
+    </Box>
   );
 };
 
