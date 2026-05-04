@@ -17,6 +17,9 @@ const viteCertDir = path.resolve(os.homedir(), ".vite-plugin-mkcert");
 const LOCAL_DOMAIN = "camera.local";
 const HOSTS_FILE = "C:\\Windows\\System32\\drivers\\etc\\hosts";
 
+// false for localhost-only dev, true for LAN access
+const USE_LOCAL_DOMAIN = process.env.USE_DOMAIN === "true";
+
 function getLocalIp() {
   const interfaces = os.networkInterfaces();
   for (const name of Object.keys(interfaces)) {
@@ -75,9 +78,11 @@ function updateEnvFile(localIp) {
 
   let content = fs.readFileSync(envPath, "utf8");
 
+  const apiHost = USE_LOCAL_DOMAIN ? LOCAL_DOMAIN : "localhost";
+
   content = content.replace(
     /VITE_API_URL=https:\/\/[\w.\-]+:(\d+)\/api\/v1/g,
-    `VITE_API_URL=https://${LOCAL_DOMAIN}:$1/api/v1`,
+    `VITE_API_URL=https://${apiHost}:$1/api/v1`,
   );
   content = content.replace(
     /VITE_ALLOWED_LAN_IPS=.*/g,
@@ -89,7 +94,7 @@ function updateEnvFile(localIp) {
   );
 
   fs.writeFileSync(envPath, content);
-  console.log(`Updated Frontend .env: ${LOCAL_DOMAIN}:7014/api/v1`);
+  console.log(`Updated Frontend .env: ${apiHost}:7014/api/v1`);
 }
 
 function updateBackendEnvFile(localIp) {
@@ -182,11 +187,14 @@ function generateCertForDomain(localIp) {
 
 (async () => {
   try {
-    console.log(`\nCertificate Synchronization Script - Local Domain Mode\n`);
+    const mode = USE_LOCAL_DOMAIN ? "LAN Domain Mode" : "Localhost Mode";
+    console.log(`\nCertificate Synchronization Script - ${mode}\n`);
 
     const localIp = getLocalIp();
     console.log(`Detected local IP: ${localIp}`);
-    console.log(`Using local domain: ${LOCAL_DOMAIN}\n`);
+    console.log(
+      `Using domain: ${USE_LOCAL_DOMAIN ? LOCAL_DOMAIN : "localhost"}\n`,
+    );
 
     // Generate certificate for domain
     generateCertForDomain(localIp);
@@ -223,13 +231,24 @@ function generateCertForDomain(localIp) {
     }
 
     console.log(`\nConfiguration Summary:`);
-    console.log(`Domain: ${LOCAL_DOMAIN}`);
+    console.log(`Domain: ${USE_LOCAL_DOMAIN ? LOCAL_DOMAIN : "localhost"}`);
     console.log(`IP: ${localIp}`);
-    console.log(`Frontend: https://${LOCAL_DOMAIN}:5173`);
-    console.log(`Backend API: https://${LOCAL_DOMAIN}:7014/api/v1`);
     console.log(
-      `\nAll devices on same LAN can now access via: https://${LOCAL_DOMAIN}:5173\n`,
+      `Frontend: https://${USE_LOCAL_DOMAIN ? LOCAL_DOMAIN : "localhost"}:5173`,
     );
+    console.log(
+      `Backend API: https://${USE_LOCAL_DOMAIN ? LOCAL_DOMAIN : "localhost"}:7014/api/v1`,
+    );
+
+    if (USE_LOCAL_DOMAIN) {
+      console.log(
+        `\nAll devices on same LAN can now access via: https://${LOCAL_DOMAIN}:5173\n`,
+      );
+    } else {
+      console.log(
+        `\nMode: Localhost only. To enable LAN access, run: USE_DOMAIN=true npm run sync-certs\n`,
+      );
+    }
   } catch (error) {
     console.error(`\nError:`, error.message);
     process.exit(1);
