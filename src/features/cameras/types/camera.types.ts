@@ -12,6 +12,8 @@ export interface CameraDevice {
   udCameraDeviceDateEditor: string | null;
   udCameraDeviceHienThi: boolean | null;
   udCameraDeviceSuDung: string | null;
+  udCameraDeviceIpAdress: string | null;
+  udCameraDevicePort: number | null;
 }
 
 export interface CreateCameraRequest {

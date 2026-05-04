@@ -22,7 +22,6 @@ export const cameraApi = {
       params: { page, limit },
     });
 
-    console.log("Camera ALL: ", response.data.data);
     return response.data.data;
   },
 
