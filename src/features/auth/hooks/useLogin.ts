@@ -28,8 +28,6 @@ export const useLogin = () => {
           userId: res.userId,
           username,
           displayName: res.displayName || username,
-          // TODO: Cần xoá trong tương lai
-          role: res.role.toLowerCase() as "admin" | "user",
         },
         res.accessToken,
       );
