@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "sync-certs": "node scripts/sync-dev-certs.js",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
@@ -12,9 +13,11 @@
     "type-check:watch": "tsc --noEmit --watch"
   },
   "dependencies": {
+    "@cycjimmy/jsmpeg-player": "^6.1.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@mui/material": "^7.3.7",
+    "@mui/material": "^6.1.10",
+    "@mui/icons-material": "^6.1.10",
     "@tanstack/react-query": "^5.90.20",
     "axios": "^1.13.4",
     "hls.js": "^1.6.15",
