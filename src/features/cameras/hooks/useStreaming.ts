@@ -1,10 +1,18 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { streamingApi } from "@features/cameras/services/streaming.api";
 import { useCamerasStore } from "@features/cameras/stores/cameras.store";
-import type { StreamingState } from "@features/cameras/types/camera.types";
-import { logError } from "@utils/errorHandler";
 
-const useStreaming = (cameraId: number | null) => {
+interface StreamingState {
+  hlsUrl: string | null;
+  isLoading: boolean;
+  error: string | null;
+  isStreaming: boolean;
+}
+
+export const useStreaming = (
+  cameraId: number | null,
+  isSubStream: boolean = false,
+) => {
   const [state, setState] = useState<StreamingState>({
     hlsUrl: null,
     isLoading: false,
@@ -15,67 +23,82 @@ const useStreaming = (cameraId: number | null) => {
   const { updateStreamingState } = useCamerasStore();
 
   useEffect(() => {
-    if (cameraId === null) return;
-
-    let isMounted = true;
+    let ignore = false;
 
     const ensureStreamRunning = async () => {
-      try {
-        setState((prev) => ({ ...prev, isLoading: true }));
+      if (cameraId === null) return;
 
-        const status = await streamingApi.getStreamStatus(cameraId);
+      setState((prev) => ({
+        ...prev,
+        isLoading: !prev.hlsUrl || !prev.isStreaming,
+        error: null,
+      }));
+
+      try {
+        const status = await streamingApi.getStreamStatus(
+          cameraId,
+          isSubStream,
+        );
+
+        if (ignore) return;
 
         if (status.isStreaming) {
-          if (isMounted) {
-            const newState: StreamingState = {
-              isStreaming: true,
-              hlsUrl: streamingApi.buildHlsUrl(cameraId),
-              isLoading: false,
-              error: null,
-            };
-            setState(newState);
-            updateStreamingState(cameraId, newState);
-          }
+          const newState: StreamingState = {
+            isStreaming: true,
+            hlsUrl: streamingApi.buildWebrtcUrl(cameraId, isSubStream),
+            isLoading: false,
+            error: null,
+          };
+          setState(newState);
+          updateStreamingState(cameraId, newState);
         } else {
-          await streamingApi.startStream(cameraId);
+          await streamingApi.startStream(cameraId, isSubStream);
 
-          await new Promise((resolve) => setTimeout(resolve, 5000));
+          if (ignore) return;
 
-          if (isMounted) {
-            const newState: StreamingState = {
-              hlsUrl: streamingApi.buildHlsUrl(cameraId),
-              isLoading: false,
-              error: null,
-              isStreaming: true,
-            };
-            setState(newState);
-            updateStreamingState(cameraId, newState);
-          }
+          const newState: StreamingState = {
+            hlsUrl: streamingApi.buildWebrtcUrl(cameraId, isSubStream),
+            isLoading: false,
+            error: null,
+            isStreaming: true,
+          };
+          setState(newState);
+          updateStreamingState(cameraId, newState);
         }
       } catch (err) {
+        if (ignore) return;
+
         const errorMessage =
           err instanceof Error ? err.message : "Failed to start stream";
-        logError("useStreaming.ensureStreamRunning", err, { cameraId });
-        if (isMounted) {
-          setState((prev) => ({
-            ...prev,
-            isLoading: false,
-            error: errorMessage,
-          }));
-          updateStreamingState(cameraId, {
-            isLoading: false,
-            error: errorMessage,
-          });
-        }
+        console.error(`[STREAMING ERROR] Camera ${cameraId}:`, err);
+
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: errorMessage,
+        }));
+        updateStreamingState(cameraId, {
+          isLoading: false,
+          error: errorMessage,
+        });
       }
     };
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        ensureStreamRunning();
+      }
+      // Kệ
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     ensureStreamRunning();
 
     return () => {
-      isMounted = false;
+      ignore = true;
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [cameraId, updateStreamingState]);
+  }, [cameraId, isSubStream, updateStreamingState]);
 
   const startStream = useCallback(async () => {
     if (cameraId === null) return;
@@ -87,12 +110,10 @@ const useStreaming = (cameraId: number | null) => {
     }));
 
     try {
-      await streamingApi.startStream(cameraId);
-
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+      await streamingApi.startStream(cameraId, isSubStream);
 
       const newState: StreamingState = {
-        hlsUrl: streamingApi.buildHlsUrl(cameraId),
+        hlsUrl: streamingApi.buildWebrtcUrl(cameraId, isSubStream),
         isLoading: false,
         error: null,
         isStreaming: true,
@@ -102,7 +123,7 @@ const useStreaming = (cameraId: number | null) => {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to start stream";
-      logError("useStreaming.startStream", err, { cameraId });
+      console.error(`[STREAMING ERROR] Camera ${cameraId}:`, err);
       setState((prev) => ({
         ...prev,
         isLoading: false,
@@ -110,19 +131,13 @@ const useStreaming = (cameraId: number | null) => {
       }));
       updateStreamingState(cameraId, { isLoading: false, error: errorMessage });
     }
-  }, [cameraId, updateStreamingState]);
+  }, [cameraId, isSubStream, updateStreamingState]);
 
   const stopStream = useCallback(async () => {
     if (cameraId === null) return;
 
-    setState((prev) => ({
-      ...prev,
-      isLoading: true,
-      error: null,
-    }));
-
     try {
-      await streamingApi.stopStream(cameraId);
+      await streamingApi.stopStream(cameraId, isSubStream);
       const newState: StreamingState = {
         hlsUrl: null,
         isLoading: false,
@@ -132,17 +147,9 @@ const useStreaming = (cameraId: number | null) => {
       setState(newState);
       updateStreamingState(cameraId, newState);
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to stop stream";
-      logError("useStreaming.stopStream", err, { cameraId });
-      setState((prev) => ({
-        ...prev,
-        isLoading: false,
-        error: errorMessage,
-      }));
-      updateStreamingState(cameraId, { isLoading: false, error: errorMessage });
+      console.error(`[STREAMING STOP ERROR] Camera ${cameraId}:`, err);
     }
-  }, [cameraId, updateStreamingState]);
+  }, [cameraId, isSubStream, updateStreamingState]);
 
   return {
     ...state,
@@ -150,5 +157,3 @@ const useStreaming = (cameraId: number | null) => {
     stopStream,
   };
 };
-
-export default useStreaming;

@@ -31,8 +31,6 @@ export const useInitializeAuth = () => {
             userId: res.user.userId,
             username: res.user.username,
             displayName: res.user.displayName || res.user.username,
-            // TODO: Cần xoá trong tương lai
-            role: (res.user.role?.toLowerCase() || "user") as "admin" | "user",
           },
           res.accessToken,
         );

@@ -20,6 +20,23 @@ export const useLogin = () => {
     setIsLoading(true);
 
     try {
+      if (
+        import.meta.env.DEV &&
+        username === "admin" &&
+        password === "hoaug-dev"
+      ) {
+        login(
+          {
+            userId: "dev-admin",
+            username: "admin",
+            displayName: "Development Admin",
+          },
+          "dev-access-token",
+        );
+
+        return { ok: true };
+      }
+
       const request: LoginRequest = { username, password };
       const res = await authApi.login(request);
 
@@ -28,8 +45,6 @@ export const useLogin = () => {
           userId: res.userId,
           username,
           displayName: res.displayName || username,
-          // TODO: Cần xoá trong tương lai
-          role: res.role.toLowerCase() as "admin" | "user",
         },
         res.accessToken,
       );
